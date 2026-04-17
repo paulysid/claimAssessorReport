@@ -18,13 +18,21 @@ export function jsonResponse(statusCode, payload) {
 
 export async function loadPrompt(name) {
   const path = resolveAssetPath('netlify', 'functions', '_assets', 'prompts', `${name}.md`);
-  return readFile(path, 'utf8');
+  try {
+    return await readFile(path, 'utf8');
+  } catch (err) {
+    throw new Error(`Prompt asset not found: ${path}`);
+  }
 }
 
 export async function loadSchema(name) {
   const path = resolveAssetPath('netlify', 'functions', '_assets', 'schemas', `${name}.json`);
-  const text = await readFile(path, 'utf8');
-  return JSON.parse(text);
+  try {
+    const text = await readFile(path, 'utf8');
+    return JSON.parse(text);
+  } catch (err) {
+    throw new Error(`Schema asset not found or invalid JSON: ${path}`);
+  }
 }
 
 export function safeParse(event) {
