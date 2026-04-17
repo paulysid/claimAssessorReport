@@ -1,9 +1,9 @@
 import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+function resolveAssetPath(...parts) {
+  return join(process.cwd(), ...parts);
+}
 
 export function jsonResponse(statusCode, payload) {
   return {
@@ -17,12 +17,12 @@ export function jsonResponse(statusCode, payload) {
 }
 
 export async function loadPrompt(name) {
-  const path = join(__dirname, '..', '..', 'prompts', `${name}.md`);
+  const path = resolveAssetPath('netlify', 'functions', '_assets', 'prompts', `${name}.md`);
   return readFile(path, 'utf8');
 }
 
 export async function loadSchema(name) {
-  const path = join(__dirname, '..', '..', 'schemas', `${name}.json`);
+  const path = resolveAssetPath('netlify', 'functions', '_assets', 'schemas', `${name}.json`);
   const text = await readFile(path, 'utf8');
   return JSON.parse(text);
 }
