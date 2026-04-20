@@ -1,28 +1,113 @@
 {
   "type": "object",
   "properties": {
-    "targetId": { "type": "string" },
-    "targetType": { "type": "string", "enum": ["lot", "common"] },
-    "areasAffected": { "type": "array", "items": { "type": "string" } },
-    "damageObserved": { "type": "array", "items": { "type": "string" } },
-    "causeStatements": { "type": "array", "items": { "type": "string" } },
-    "worksMentioned": { "type": "array", "items": { "type": "string" } },
-    "furtherInvestigationMentioned": { "type": "array", "items": { "type": "string" } },
-    "uncertaintiesMentioned": { "type": "array", "items": { "type": "string" } },
+    "targetId": {
+      "type": "string"
+    },
+    "targetType": {
+      "type": "string",
+      "enum": [
+        "lot",
+        "common"
+      ]
+    },
+    "areasAffected": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "damageObserved": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "causeStatements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "worksMentioned": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "furtherInvestigationMentioned": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "uncertaintiesMentioned": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "sourceReferences": {
       "type": "array",
       "items": {
         "type": "object",
         "properties": {
-          "pageStart": { "type": "integer" },
-          "pageEnd": { "type": "integer" },
-          "evidenceId": { "type": "string" }
+          "pageStart": {
+            "type": "integer"
+          },
+          "pageEnd": {
+            "type": "integer"
+          },
+          "evidenceId": {
+            "type": "string"
+          }
         },
-        "required": ["pageStart", "pageEnd", "evidenceId"],
+        "required": [
+          "pageStart",
+          "pageEnd",
+          "evidenceId"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "commonPropertyFindingsByType": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "label",
+          "items"
+        ],
         "additionalProperties": false
       }
     }
   },
-  "required": ["targetId", "targetType", "areasAffected", "damageObserved", "causeStatements", "worksMentioned", "furtherInvestigationMentioned", "uncertaintiesMentioned", "sourceReferences"],
+  "required": [
+    "targetId",
+    "targetType",
+    "areasAffected",
+    "damageObserved",
+    "causeStatements",
+    "worksMentioned",
+    "furtherInvestigationMentioned",
+    "uncertaintiesMentioned",
+    "commonPropertyFindingsByType",
+    "sourceReferences"
+  ],
   "additionalProperties": false
 }

@@ -82,3 +82,9 @@ WHOLE-BUILDING AND COMMERCIAL STRATA RULES
   - electrical services to the building
 - In these cases, it is acceptable to create a broad common-property or building-wide target so the report can still be processed.
 - If no individual lots are explicitly identified, do not invent any lots.
+
+
+COMMON PROPERTY TARGET STRUCTURE
+- Return only one common-property target for the document.
+- Do not create separate targets for different common-property finding types such as roof, slab, electrical, façade, or services.
+- Different common-property aspects should be grouped later within the single common-property target.

@@ -50,6 +50,12 @@ LOT AND COMMON PROPERTY RULES
 - If the evidence explicitly applies to both a lot and common property, you may say that the report links the issue to both, but do not go beyond the source wording.
 - Do not present likely common-property classification as a legal conclusion.
 
+
+COMMON PROPERTY GROUPING RULES
+- Treat common property as a single target.
+- If structured facts contain grouped common-property finding types, summarise them within the single common-property summary rather than treating them as separate targets.
+- It is acceptable to mention multiple grouped types, such as roof-related, slab or structural, electrical or building services, or external wall aspects, within one common-property summary.
+
 UNCERTAINTY RULES
 - Preserve uncertainty where present.
 - Do not remove qualifiers from the source.

@@ -75,3 +75,9 @@ OUTPUT REQUIREMENTS
 WHOLE-BUILDING COMMON PROPERTY RULES
 - For a common-property or building-wide target, you may include evidence that relates to the insured building, common area contents, building fabric, slab, structural elements, warehouse or factory building shell, or building services, even where the report does not use the exact phrase "common property".
 - In a whole-building commercial strata report, damage to the building, slab, building services, temporary electrical systems, or reinstatement of the building should be treated as relevant to the common-property or building-wide target unless the text clearly limits it to a particular lot only.
+
+
+COMMON PROPERTY TARGET STRUCTURE
+- Return only one common-property target for the document.
+- Do not create separate targets for different common-property finding types such as roof, slab, electrical, façade, or services.
+- Different common-property aspects should be grouped later within the single common-property target.

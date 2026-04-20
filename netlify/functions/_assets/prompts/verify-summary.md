@@ -75,6 +75,12 @@ CAUSE VERIFICATION RULES
   - the assessor notes the damage may be related to ...
   - the report refers to a suspected cause of ...
 
+
+COMMON PROPERTY GROUPING RULES
+- Common property must remain a single target.
+- Do not reject summary wording merely because it refers to multiple grouped common-property finding types within the same target.
+- Ensure those grouped common-property findings remain within the single common-property summary and are not treated as separate targets.
+
 APPROVED SUMMARY RULES
 - The approved summary must contain only supported wording.
 - Keep it clear and customer-friendly.

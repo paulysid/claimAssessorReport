@@ -12,6 +12,21 @@ function uniqueStrings(values) {
   return [...new Set((values || []).filter(Boolean).map((v) => String(v).trim()).filter(Boolean))];
 }
 
+
+function mergeCommonTargets(targets) {
+  const items = Array.isArray(targets) ? targets : [];
+  const common = items.filter((t) => t?.targetType === 'common');
+  const nonCommon = items.filter((t) => t?.targetType !== 'common');
+  if (!common.length) return items;
+  const merged = {
+    targetId: 'common-property',
+    targetType: 'common',
+    displayName: 'Common Property',
+    aliases: uniqueStrings(common.flatMap((t) => Array.isArray(t.aliases) ? t.aliases : []).concat(['Common Property']))
+  };
+  return [merged, ...nonCommon];
+}
+
 function hasCommonTarget(targets) {
   return Array.isArray(targets) && targets.some((t) => t?.targetType === 'common');
 }
@@ -90,7 +105,7 @@ function inferCandidateSections(payload) {
 
 function applyDetectionFallbacks(payload, data) {
   const sourceText = collectSourceText(payload);
-  const targets = Array.isArray(data?.targets) ? [...data.targets] : [];
+  const targets = mergeCommonTargets(Array.isArray(data?.targets) ? [...data.targets] : []);
   const candidateSections = Array.isArray(data?.candidateSections) ? [...data.candidateSections] : [];
 
   if (shouldAddBroadCommonTarget(sourceText, targets)) {

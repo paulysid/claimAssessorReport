@@ -27,6 +27,25 @@ COMMON PROPERTY EXTRACTION RULES
 - Do not say an item is legally common property unless the evidence explicitly says so.
 - If the evidence links a broader building element or likely shared issue to a specific lot impact, it is acceptable for both the common-property and lot-specific outputs to reflect that relationship.
 
+
+COMMON PROPERTY GROUPING RULES
+- The common-property output must remain a single target.
+- Do not create separate common-property targets for roof, slab, electrical, façade, services, or other building elements.
+- Where common-property findings are identified, group them within the single common-property target using the commonPropertyFindingsByType field.
+- Use practical grouped types such as:
+  - roof
+  - slab-structural
+  - electrical-building-services
+  - external-wall-facade
+  - windows-doors
+  - balcony-waterproofing
+  - plumbing-services
+  - shared-areas
+  - fire-damage
+  - other
+- Each grouped type should contain concise factual items explicitly supported by the evidence.
+- For lot targets, return an empty commonPropertyFindingsByType array.
+
 FACT EXTRACTION RULES
 Extract only the categories requested by the schema, such as:
 - areas affected

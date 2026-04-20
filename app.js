@@ -142,6 +142,27 @@ function renderEvidence() {
   `).join('') : '<div class="small">No evidence loaded for the selected target.</div>';
 }
 
+
+function formatFindingTypeLabel(value) {
+  return String(value || '').replace(/[-_]+/g, ' ').replace(/\w/g, (m) => m.toUpperCase());
+}
+
+function renderCommonPropertyGrouping(extraction) {
+  const groups = Array.isArray(extraction?.commonPropertyFindingsByType) ? extraction.commonPropertyFindingsByType.filter((g) => Array.isArray(g.items) && g.items.length) : [];
+  if (!groups.length) return '';
+  return `
+    <div>
+      <h4>Common property findings by type</h4>
+      ${groups.map((group) => `
+        <div class="card">
+          <strong>${escapeHtml(group.label || formatFindingTypeLabel(group.type))}</strong>
+          <ul>${group.items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
 function renderResults() {
   const entries = state.targets.map((target) => {
     const extraction = state.extractionByTarget[target.targetId];
@@ -157,6 +178,7 @@ function renderResults() {
           </div>
         ` : ''}
         ${extraction ? `
+          ${target.targetType === 'common' ? renderCommonPropertyGrouping(extraction) : ''}
           <div class="inline-grid">
             <div>
               <h4>Damage observed</h4>
@@ -477,11 +499,9 @@ function auditExport() {
 function summaryExportMarkdown() {
   return state.targets.map((target) => {
     const summary = state.summariesByTarget[target.targetId];
-    if (!summary) return `## ${target.displayName}\n\nNo verified summary available.\n`;
-    const softened = (summary.softenedStatements || []).map((item) => `- Original: ${item.original}\n  Revised: ${item.revised}\n  Reason: ${item.reason}`).join('\n');
-    const removed = (summary.removedStatements || []).map((item) => `- ${item}`).join('\n');
-    return `## ${target.displayName}\n\n${summary.approvedSummary}\n\nVerification status: ${summary.verificationStatus}\n${softened ? `\nSoftened statements\n${softened}\n` : ''}${removed ? `\nRemoved statements\n${removed}\n` : ''}`;
-  }).join('\n');
+    if (!summary) return '## ' + target.displayName + '\\n\\nNo verified summary available.\\n';
+    return '## ' + target.displayName + '\\n\\n' + (summary.approvedSummary || 'No approved summary returned.') + '\\n';
+  }).join('\\n');
 }
 
 function openTargetDialog(existing = null) {
