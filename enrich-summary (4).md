@@ -2,27 +2,26 @@
   "type": "object",
   "properties": {
     "targetId": { "type": "string" },
-    "targetType": { "type": "string", "enum": ["lot", "common"] },
-    "areasAffected": { "type": "array", "items": { "type": "string" } },
-    "damageObserved": { "type": "array", "items": { "type": "string" } },
-    "causeStatements": { "type": "array", "items": { "type": "string" } },
-    "worksMentioned": { "type": "array", "items": { "type": "string" } },
-    "furtherInvestigationMentioned": { "type": "array", "items": { "type": "string" } },
-    "uncertaintiesMentioned": { "type": "array", "items": { "type": "string" } },
-    "sourceReferences": {
+    "evidenceItems": {
       "type": "array",
       "items": {
         "type": "object",
         "properties": {
+          "evidenceId": { "type": "string" },
           "pageStart": { "type": "integer" },
           "pageEnd": { "type": "integer" },
-          "evidenceId": { "type": "string" }
+          "summary": { "type": "string" },
+          "rawSnippet": { "type": "string" },
+          "appliesTo": { "type": "array", "items": { "type": "string" } },
+          "explicitness": { "type": "string", "enum": ["explicit", "context-linked", "ambiguous"] },
+          "confidence": { "type": "string", "enum": ["high", "medium", "low"] },
+          "included": { "type": "boolean" }
         },
-        "required": ["pageStart", "pageEnd", "evidenceId"],
+        "required": ["evidenceId", "pageStart", "pageEnd", "summary", "rawSnippet", "appliesTo", "explicitness", "confidence"],
         "additionalProperties": false
       }
     }
   },
-  "required": ["targetId", "targetType", "areasAffected", "damageObserved", "causeStatements", "worksMentioned", "furtherInvestigationMentioned", "uncertaintiesMentioned", "sourceReferences"],
+  "required": ["targetId", "evidenceItems"],
   "additionalProperties": false
 }

@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "properties": {
+    "targetId": { "type": "string" },
+    "verificationStatus": { "type": "string", "enum": ["verified", "verified-with-softening", "failed"] },
+    "approvedSummary": { "type": "string" },
+    "removedStatements": { "type": "array", "items": { "type": "string" } },
+    "softenedStatements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "original": { "type": "string" },
+          "revised": { "type": "string" },
+          "reason": { "type": "string" }
+        },
+        "required": ["original", "revised", "reason"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["targetId", "verificationStatus", "approvedSummary", "removedStatements", "softenedStatements"],
+  "additionalProperties": false
+}

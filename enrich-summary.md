@@ -3,12 +3,12 @@ import { callAnthropic, jsonResponse, loadPrompt, pickModel, safeParse } from '.
 export const handler = async (event) => {
   try {
     const payload = safeParse(event);
-    const system = await loadPrompt('extract-facts');
+    const system = await loadPrompt('verify-summary');
     const data = await callAnthropic({
       model: pickModel(payload?.config?.modelProfile, 'strong'),
       system,
       userPayload: payload,
-      schemaName: 'extract-facts-response',
+      schemaName: 'verify-summary-response',
       temperature: 0
     });
     return jsonResponse(200, { ok: true, data });

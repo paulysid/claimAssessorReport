@@ -1,9 +1,12 @@
 {
-  "type": "object",
-  "properties": {
-    "targetId": { "type": "string" },
-    "draftSummary": { "type": "string" }
+  "name": "strata-claims-extractor-build-validated",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "check": "node scripts/check.mjs"
   },
-  "required": ["targetId", "draftSummary"],
-  "additionalProperties": false
+  "engines": {
+    "node": ">=20"
+  }
 }
