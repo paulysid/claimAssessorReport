@@ -142,3 +142,5 @@ menu { display: flex; justify-content: flex-end; gap: 0.6rem; padding: 0; margin
   .dialog-form { min-width: auto; }
   .inline-grid { grid-template-columns: 1fr; }
 }
+
+.verification-grid{display:grid;grid-template-columns:1.2fr 1.2fr 0.8fr;gap:12px;padding:8px 0;border-top:1px solid #e5e7eb}.verification-grid.header{font-weight:700;border-top:none;padding-top:0}.excluded{opacity:.6}
