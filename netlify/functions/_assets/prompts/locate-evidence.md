@@ -70,3 +70,8 @@ OUTPUT REQUIREMENTS
 - Return valid JSON only.
 - The JSON must match the required schema exactly.
 - If no explicit or clearly linked evidence is found for the target, return an empty evidenceItems array.
+
+
+WHOLE-BUILDING COMMON PROPERTY RULES
+- For a common-property or building-wide target, you may include evidence that relates to the insured building, common area contents, building fabric, slab, structural elements, warehouse or factory building shell, or building services, even where the report does not use the exact phrase "common property".
+- In a whole-building commercial strata report, damage to the building, slab, building services, temporary electrical systems, or reinstatement of the building should be treated as relevant to the common-property or building-wide target unless the text clearly limits it to a particular lot only.

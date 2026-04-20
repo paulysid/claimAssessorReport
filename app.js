@@ -269,7 +269,11 @@ function getTargetKeywords(target) {
   const aliases = Array.isArray(target?.aliases) ? target.aliases : [];
   const names = [target?.displayName, ...aliases].filter(Boolean).map((x) => String(x).toLowerCase());
   if (target?.targetType === 'common') {
-    names.push('common property', 'shared', 'common area', 'roof', 'hallway', 'stairwell', 'foyer', 'facade', 'external', 'ceiling cavity');
+    names.push(
+      'common property', 'shared', 'common area', 'common area contents', 'building', 'building-wide',
+      'roof', 'hallway', 'stairwell', 'foyer', 'facade', 'external', 'ceiling cavity', 'concrete slab',
+      'slab', 'warehouse', 'factory', 'electrical', 'building services', 'temporary power', 'distribution boards'
+    );
   }
   return [...new Set(names)];
 }

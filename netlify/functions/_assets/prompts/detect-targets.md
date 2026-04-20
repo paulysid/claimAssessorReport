@@ -66,3 +66,19 @@ OUTPUT REQUIREMENTS
 - The JSON must match the required schema exactly.
 - If no lots are explicitly identified, return an empty lots array.
 - If common property is not explicitly identified but likely shared building aspects are present, it is acceptable to include the common target so those aspects can be assessed later.
+
+
+WHOLE-BUILDING AND COMMERCIAL STRATA RULES
+- If the report appears to be written at the level of the owners corporation, strata plan, insured building, common area contents, warehouse, factory, or broader building reinstatement, you should still return a common-property or building-wide target even if no individual lots are identified.
+- Strong indicators include wording such as:
+  - The Owners - Strata Plan ...
+  - The Owners of Strata Plan ...
+  - Insured Property: Building
+  - Common Area Contents
+  - fire damage to building
+  - concrete slab damage
+  - building reinstatement
+  - temporary power to the building
+  - electrical services to the building
+- In these cases, it is acceptable to create a broad common-property or building-wide target so the report can still be processed.
+- If no individual lots are explicitly identified, do not invent any lots.
