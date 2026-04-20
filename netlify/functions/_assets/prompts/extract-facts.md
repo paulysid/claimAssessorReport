@@ -12,7 +12,7 @@ GENERAL RULES
 - Do not add interpretation.
 - Do not add insurance meaning.
 - Do not infer ownership, liability, responsibility, coverage, or rectification scope.
-- Only include a cause statement if the evidence expressly states a cause or suspected cause.
+- Include cause statements where the report expressly states a cause, suspected cause, likely cause, possible cause, or similar qualified professional opinion.
 - Only include works mentioned if the evidence expressly refers to works, repairs, replacement, remediation, investigation, or a similar action.
 - Return valid JSON only.
 
@@ -35,6 +35,7 @@ When extracting facts:
 - avoid combining multiple ideas into one statement unless the source clearly combines them
 
 CAUSE RULES
+- Include cause statements where the report expressly states a cause, suspected cause, likely cause, possible cause, or similar qualified professional opinion.
 - Do not state a cause unless the evidence explicitly states it.
 - If the wording is qualified, preserve that qualification.
 - Examples of qualifications to preserve include wording such as:
@@ -44,6 +45,7 @@ CAUSE RULES
   - suspected
   - consistent with
 - Do not convert qualified wording into definite wording.
+- Preserve all qualifications exactly in substance, including where the assessor expresses a professional view that remains qualified rather than confirmed.
 
 AREA RULES
 - Only list areas explicitly identified in the evidence.

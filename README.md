@@ -62,6 +62,7 @@ After deploy, call:
 ```
 
 ## Notes
+- Verification preserves assessor-stated suspected, possible, or likely causes where they are explicitly in the report and remain clearly qualified in the summary.
 
 - OCR fallback is still a planned enhancement. This package flags weak extraction quality but does not perform OCR.
 - The Anthropic API call implementation uses `fetch` directly inside Netlify Functions to keep the package dependency-light and easier to validate here.

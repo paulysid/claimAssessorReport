@@ -53,6 +53,11 @@ UNCERTAINTY RULES
 - Do not make a suspected cause sound definite.
 - Do not make a limited inspection sound comprehensive.
 
+CAUSE SUMMARY RULES
+- You may include a suspected, possible, or likely cause if it is explicitly supported by the structured facts and source evidence.
+- Preserve the report's level of certainty.
+- Do not present a suspected or likely cause as confirmed.
+
 BAD PRACTICE TO AVOID
 Do not write statements like:
 - this means

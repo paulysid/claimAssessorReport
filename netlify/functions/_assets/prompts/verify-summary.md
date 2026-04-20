@@ -53,6 +53,17 @@ Remove a statement entirely when:
 - it cannot be repaired without guessing
 - it would remain misleading even if softened
 
+CAUSE VERIFICATION RULES
+- Suspected, possible, likely, or otherwise qualified cause statements are allowed if they are explicitly stated in the structured facts or source evidence.
+- Do not remove a cause statement only because it is not definitive.
+- Preserve the assessor's level of certainty.
+- A suspected or likely cause may remain in the approved summary if the wording stays qualified.
+- Remove or soften only where the summary strengthens the wording beyond the report.
+- Examples of acceptable qualified wording include:
+  - the report states the likely cause is ...
+  - the assessor notes the damage may be related to ...
+  - the report refers to a suspected cause of ...
+
 APPROVED SUMMARY RULES
 - The approved summary must contain only supported wording.
 - Keep it clear and customer-friendly.
