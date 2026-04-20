@@ -71,6 +71,55 @@ function parseJsonFromText(text) {
   }
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function buildBackoffDelay(attempt) {
+  const base = Number(process.env.ANTHROPIC_RETRY_BASE_MS || 2000);
+  const jitter = Math.floor(Math.random() * 800);
+  return Math.min(base * (2 ** (attempt - 1)) + jitter, 15000);
+}
+
+function normaliseAnthropicError(responseData, response, requestId) {
+  const message = responseData?.error?.message || 'Anthropic request failed.';
+  const type = responseData?.error?.type || 'api_error';
+  const status = response?.status || 500;
+  const error = new Error(message);
+  error.status = status;
+  error.type = type;
+  error.requestId = requestId;
+  error.retryable = status === 429 || status === 500 || status === 529 || status === 504 || /overloaded/i.test(message);
+  return error;
+}
+
+export function toClientError(error, fallbackMessage = 'Request failed.') {
+  const status = Number(error?.status) || 500;
+  const retryable = Boolean(error?.retryable);
+  const requestId = error?.requestId || null;
+  const message = error?.clientMessage || error?.message || fallbackMessage;
+  let code = error?.code || 'REQUEST_FAILED';
+
+  if (error?.type === 'overloaded_error' || /overloaded/i.test(error?.message || '')) {
+    code = 'ANTHROPIC_OVERLOADED';
+  } else if (status === 504) {
+    code = 'ANTHROPIC_TIMEOUT';
+  } else if (status === 429) {
+    code = 'ANTHROPIC_RATE_LIMITED';
+  }
+
+  return {
+    ok: false,
+    error: {
+      code,
+      message,
+      retryable,
+      requestId,
+      details: error?.details || null
+    }
+  };
+}
+
 async function fetchAnthropic(body, apiKey) {
   const controller = new AbortController();
   const timeoutMs = Number(process.env.ANTHROPIC_TIMEOUT_MS || 45000);
@@ -86,17 +135,30 @@ async function fetchAnthropic(body, apiKey) {
       body: JSON.stringify(body),
       signal: controller.signal
     });
-    const data = await response.json();
+    const requestId = response.headers.get('request-id') || response.headers.get('x-request-id') || null;
+    const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(data?.error?.message || 'Anthropic request failed.');
+      throw normaliseAnthropicError(data, response, requestId);
     }
-    return data?.content?.map((c) => c.text || '').join('\n').trim() || '';
+    return {
+      text: data?.content?.map((c) => c.text || '').join('\n').trim() || '',
+      requestId
+    };
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      const timeoutError = new Error(`Anthropic request timed out after ${timeoutMs}ms`);
+      timeoutError.status = 504;
+      timeoutError.type = 'timeout_error';
+      timeoutError.retryable = true;
+      throw timeoutError;
+    }
+    throw error;
   } finally {
     clearTimeout(timeout);
   }
 }
 
-export async function callAnthropic({ model, system, userPayload, schemaName, temperature = 0.1, maxTokens = 3200 }) {
+export async function callAnthropic({ model, system, userPayload, schemaName, temperature = 0.1, maxTokens = 3200, fallbackModel = undefined }) {
   const apiKey = requireEnv('ANTHROPIC_API_KEY');
   const schema = await loadSchema(schemaName);
   const inputText = JSON.stringify({ schema, input: userPayload }, null, 2);
@@ -120,17 +182,33 @@ export async function callAnthropic({ model, system, userPayload, schemaName, te
 
   debugLog('Anthropic request prepared', { model, schemaName, inputChars: inputText.length, maxTokens });
 
-  const maxAttempts = 2;
+  const maxAttempts = Number(process.env.ANTHROPIC_MAX_RETRIES || 3);
   let lastError;
+  let activeBody = baseBody;
+
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
-      const text = await fetchAnthropic(baseBody, apiKey);
-      debugLog('Anthropic response received', { attempt, outputChars: text.length });
-      return parseJsonFromText(text);
+      const result = await fetchAnthropic(activeBody, apiKey);
+      debugLog('Anthropic response received', { attempt, outputChars: result.text.length, requestId: result.requestId });
+      return parseJsonFromText(result.text);
     } catch (error) {
       lastError = error;
-      debugLog('Anthropic request failed', { attempt, message: error.message });
+      debugLog('Anthropic request failed', { attempt, message: error.message, status: error.status, type: error.type, requestId: error.requestId });
       if (attempt >= maxAttempts) break;
+      if (!error?.retryable) break;
+      await sleep(buildBackoffDelay(attempt));
+    }
+  }
+
+  if (fallbackModel && fallbackModel !== model) {
+    debugLog('Anthropic fallback model attempt starting', { primaryModel: model, fallbackModel });
+    try {
+      const fallbackResult = await fetchAnthropic({ ...baseBody, model: fallbackModel }, apiKey);
+      debugLog('Anthropic fallback response received', { outputChars: fallbackResult.text.length, requestId: fallbackResult.requestId, fallbackModel });
+      return parseJsonFromText(fallbackResult.text);
+    } catch (fallbackError) {
+      lastError = fallbackError;
+      debugLog('Anthropic fallback request failed', { message: fallbackError.message, status: fallbackError.status, type: fallbackError.type, requestId: fallbackError.requestId });
     }
   }
 
@@ -153,11 +231,15 @@ export async function callAnthropic({ model, system, userPayload, schemaName, te
   };
 
   try {
-    const text = await fetchAnthropic(repairBody, apiKey);
-    debugLog('Anthropic repair response received', { outputChars: text.length });
-    return parseJsonFromText(text);
+    const result = await fetchAnthropic(repairBody, apiKey);
+    debugLog('Anthropic repair response received', { outputChars: result.text.length, requestId: result.requestId });
+    return parseJsonFromText(result.text);
   } catch (repairError) {
-    throw new Error(`Anthropic request failed: ${repairError.message || lastError?.message || 'Unknown error'}`);
+    const finalError = repairError || lastError || new Error('Unknown Anthropic error');
+    finalError.clientMessage = finalError.retryable
+      ? 'The extraction service is temporarily overloaded. Please retry in a moment.'
+      : `Anthropic request failed: ${finalError.message || 'Unknown error'}`;
+    throw finalError;
   }
 }
 
@@ -192,6 +274,16 @@ export function pickModel(profile = 'balanced', tier = 'strong') {
     }
   };
   return defaults[profile]?.[tier] || defaults.balanced[tier];
+}
+
+export function pickFallbackModel(kind = 'extraction') {
+  if (kind === 'extraction') {
+    return process.env.ANTHROPIC_EXTRACTION_FALLBACK_MODEL || process.env.ANTHROPIC_ROUTING_MODEL || 'claude-haiku-4-5';
+  }
+  if (kind === 'verification') {
+    return process.env.ANTHROPIC_VERIFICATION_FALLBACK_MODEL || process.env.ANTHROPIC_EXTRACTION_MODEL || 'claude-haiku-4-5';
+  }
+  return process.env.ANTHROPIC_ROUTING_MODEL || 'claude-haiku-4-5';
 }
 
 export function normaliseEvidenceItems(items = []) {

@@ -71,7 +71,6 @@ After deploy, call:
 
 - Add OCR fallback for scanned PDFs
 - Add response schema validation inside functions beyond JSON shape control
-- Add function-level retry and rate-limit backoff
 - Add integration tests with sample reports
 - Add finer block/line evidence routing for complex layouts
 
@@ -79,3 +78,12 @@ After deploy, call:
 ## Prompt and best-practice updates
 
 This version includes stronger production-grade prompts, tighter one-target-at-a-time evidence routing, smaller evidence windows to reduce timeout risk, schema-repair retry handling, configurable model environment variables, and visible verification details including softened and removed statements.
+
+## Resilience improvements in this patch
+
+This version adds:
+- retry handling with backoff and jitter for temporary Anthropic overloads
+- clean JSON error responses for retryable provider issues
+- Anthropic request ID capture in debug logs where available
+- optional fallback models for extraction and verification
+- a small pause between target runs in the browser to reduce burst pressure

@@ -1,4 +1,4 @@
-import { callAnthropic, jsonResponse, loadPrompt, pickModel, safeParse } from './_shared.mjs';
+import { callAnthropic, jsonResponse, loadPrompt, pickFallbackModel, pickModel, safeParse, toClientError } from './_shared.mjs';
 
 export const handler = async (event) => {
   try {
@@ -6,6 +6,7 @@ export const handler = async (event) => {
     const system = await loadPrompt('extract-facts');
     const data = await callAnthropic({
       model: pickModel(payload?.config?.modelProfile, 'strong'),
+      fallbackModel: pickFallbackModel('extraction'),
       system,
       userPayload: payload,
       schemaName: 'extract-facts-response',
@@ -13,7 +14,9 @@ export const handler = async (event) => {
     });
     return jsonResponse(200, { ok: true, data });
   } catch (error) {
-    return jsonResponse(500, { ok: false, error: { message: error.message } });
+    const clientError = toClientError(error, 'The fact extraction step failed.');
+    const status = clientError.error.retryable ? 503 : 500;
+    return jsonResponse(status, clientError);
   }
 };
 

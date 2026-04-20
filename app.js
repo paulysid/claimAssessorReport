@@ -324,6 +324,10 @@ function buildEvidenceCandidateContext(target, config) {
   return shortlisted;
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function postJson(url, body) {
   const response = await fetch(url, {
     method: 'POST',
@@ -332,7 +336,9 @@ async function postJson(url, body) {
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok || data.ok === false) {
-    throw new Error(data?.error?.message || `Request failed for ${url}`);
+    const requestId = data?.error?.requestId ? ` Request ID: ${data.error.requestId}.` : '';
+    const retryable = data?.error?.retryable ? ' This should be temporary. Please retry.' : '';
+    throw new Error((data?.error?.message || `Request failed for ${url}`) + requestId + retryable);
   }
   return data.data;
 }
@@ -436,6 +442,7 @@ async function runFullPipeline() {
   for (const target of state.targets) {
     await runTargetPipeline(target);
     renderResults();
+    await sleep(1200);
   }
 }
 
