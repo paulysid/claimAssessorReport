@@ -152,9 +152,8 @@ function renderResults() {
         <h3>${escapeHtml(target.displayName)} <span class="badge">${escapeHtml(target.targetType)}</span></h3>
         ${summary ? `
           <div class="callout ${summary.verificationStatus === 'failed' ? 'error' : 'success'}">
-            <strong>Verified summary</strong>
+            <strong>Customer summary</strong>
             <p>${escapeHtml(summary.approvedSummary || 'No approved summary returned.')}</p>
-            <div class="small">Verification status: ${escapeHtml(summary.verificationStatus)}</div>
           </div>
         ` : ''}
         ${extraction ? `

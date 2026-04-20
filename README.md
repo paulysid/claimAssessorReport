@@ -88,3 +88,6 @@ This version adds:
 - Anthropic request ID capture in debug logs where available
 - optional fallback models for extraction and verification
 - a small pause between target runs in the browser to reduce burst pressure
+
+
+Customer-facing outputs now exclude verification status, softened statements, and removed statements. These remain available in the audit export only.
