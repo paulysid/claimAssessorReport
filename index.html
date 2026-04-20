@@ -1,28 +1,126 @@
-{
-  "type": "object",
-  "properties": {
-    "targetId": { "type": "string" },
-    "targetType": { "type": "string", "enum": ["lot", "common"] },
-    "areasAffected": { "type": "array", "items": { "type": "string" } },
-    "damageObserved": { "type": "array", "items": { "type": "string" } },
-    "causeStatements": { "type": "array", "items": { "type": "string" } },
-    "worksMentioned": { "type": "array", "items": { "type": "string" } },
-    "furtherInvestigationMentioned": { "type": "array", "items": { "type": "string" } },
-    "uncertaintiesMentioned": { "type": "array", "items": { "type": "string" } },
-    "sourceReferences": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "pageStart": { "type": "integer" },
-          "pageEnd": { "type": "integer" },
-          "evidenceId": { "type": "string" }
-        },
-        "required": ["pageStart", "pageEnd", "evidenceId"],
-        "additionalProperties": false
-      }
-    }
-  },
-  "required": ["targetId", "targetType", "areasAffected", "damageObserved", "causeStatements", "worksMentioned", "furtherInvestigationMentioned", "uncertaintiesMentioned", "sourceReferences"],
-  "additionalProperties": false
-}
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Strata Claims Assessment Report Extractor</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <h1>Strata Claims Assessment Report Extractor</h1>
+        <p class="subtle">Browser-side PDF extraction. Server-side Claude analysis via Netlify Functions.</p>
+      </div>
+      <div class="actions-row">
+        <button id="clearSessionBtn" class="secondary">Clear session</button>
+        <button id="downloadAuditBtn" class="secondary">Download audit JSON</button>
+        <button id="downloadSummaryBtn" class="secondary">Download customer summary</button>
+      </div>
+    </header>
+
+    <main class="grid">
+      <section class="panel span-2">
+        <h2>1. Upload report</h2>
+        <div class="upload-box">
+          <input id="pdfFileInput" type="file" accept="application/pdf" />
+          <button id="extractPdfBtn">Extract PDF text</button>
+        </div>
+        <div id="fileMeta" class="meta-grid"></div>
+        <div id="extractionDiagnostics" class="callout hidden"></div>
+      </section>
+
+      <section class="panel span-2">
+        <h2>2. Processing controls</h2>
+        <div class="controls-grid">
+          <label>
+            Anthropic model profile
+            <select id="modelProfileSelect">
+              <option value="balanced">Balanced</option>
+              <option value="higher_accuracy">Higher accuracy</option>
+              <option value="lower_cost">Lower cost</option>
+            </select>
+          </label>
+          <label>
+            Max pages per evidence window
+            <input id="maxWindowPagesInput" type="number" min="1" max="10" value="3" />
+          </label>
+          <label>
+            Section preview pages
+            <input id="sectionPreviewPagesInput" type="number" min="1" max="12" value="8" />
+          </label>
+        </div>
+        <div class="actions-row">
+          <button id="detectTargetsBtn" disabled>Detect lots and common property</button>
+          <button id="runPipelineBtn" disabled>Run full pipeline</button>
+        </div>
+        <div id="progressList" class="progress-list"></div>
+      </section>
+
+      <section class="panel">
+        <h2>3. Detected targets</h2>
+        <div class="split-header">
+          <span>Review and amend before processing</span>
+          <button id="addTargetBtn" class="secondary" disabled>Add target</button>
+        </div>
+        <div id="targetsContainer" class="stack"></div>
+      </section>
+
+      <section class="panel">
+        <h2>4. Evidence review</h2>
+        <label>
+          View target
+          <select id="evidenceTargetSelect"></select>
+        </label>
+        <div class="actions-row compact">
+          <button id="refreshEvidenceBtn" class="secondary" disabled>Refresh evidence for selected target</button>
+        </div>
+        <div id="evidenceContainer" class="stack"></div>
+      </section>
+
+      <section class="panel span-2">
+        <h2>5. Results</h2>
+        <div id="resultsContainer" class="stack"></div>
+      </section>
+
+      <section class="panel span-2">
+        <h2>6. Raw document preview</h2>
+        <details>
+          <summary>Show extracted text preview</summary>
+          <pre id="documentPreview" class="document-preview"></pre>
+        </details>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="targetDialog">
+    <form method="dialog" id="targetForm" class="dialog-form">
+      <h3>Target</h3>
+      <label>
+        Display name
+        <input name="displayName" required />
+      </label>
+      <label>
+        Type
+        <select name="targetType">
+          <option value="lot">Lot</option>
+          <option value="common">Common property</option>
+        </select>
+      </label>
+      <label>
+        Aliases (comma separated)
+        <textarea name="aliases"></textarea>
+      </label>
+      <menu>
+        <button value="cancel" class="secondary">Cancel</button>
+        <button value="save">Save</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
