@@ -1,18 +1,17 @@
-import { callAnthropic, jsonResponse, loadPrompt, normaliseEvidenceItems, pickModel, safeParse } from './_shared.mjs';
+import { callAnthropic, jsonResponse, loadPrompt, pickModel, safeParse } from './_shared.mjs';
 
 export const handler = async (event) => {
   try {
     const payload = safeParse(event);
-    const system = await loadPrompt('locate-evidence');
-    const raw = await callAnthropic({
-      model: pickModel(payload?.config?.modelProfile, 'light'),
+    const system = await loadPrompt('extract-facts');
+    const data = await callAnthropic({
+      model: pickModel(payload?.config?.modelProfile, 'strong'),
       system,
       userPayload: payload,
-      schemaName: 'locate-evidence-response',
+      schemaName: 'extract-facts-response',
       temperature: 0
     });
-    raw.evidenceItems = normaliseEvidenceItems(raw.evidenceItems || []);
-    return jsonResponse(200, { ok: true, data: raw });
+    return jsonResponse(200, { ok: true, data });
   } catch (error) {
     return jsonResponse(500, { ok: false, error: { message: error.message } });
   }
