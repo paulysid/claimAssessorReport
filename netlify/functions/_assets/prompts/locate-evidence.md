@@ -12,22 +12,30 @@ GENERAL RULES
 - Use Australian English spelling.
 - Prefer accuracy over completeness.
 - Only include evidence that is explicitly supported by the supplied text.
-- If uncertain, omit the item.
+- If uncertain, omit the item from a lot.
 - Do not infer ownership, responsibility, liability, insurance coverage, rectification entitlement, or causation unless explicitly stated.
 - Do not include broad report text that might relate to the target but is not clearly linked to it.
 - Do not include administrative text unless it contains useful factual evidence.
 - Return valid JSON only.
 
-TARGET MATCHING RULES
-- Only include evidence where the provided target is explicitly named or clearly linked by immediate context.
+LOT ATTRIBUTION RULES
+- Only include evidence for a lot where the lot is explicitly named or clearly linked by the supplied text.
 - A room reference may be treated as evidence for a lot only where the text clearly links that room to the lot.
 - Do not assume that a room reference belongs to the target lot if the link is unclear.
-- For common property, only include evidence that clearly refers to shared or common building areas.
+- If there is meaningful uncertainty about whether the information relates to that lot, do not include it in that lot's evidence set.
+- Be conservative for lot attribution because later lot outputs must not include information belonging to other lots.
+
+COMMON PROPERTY INCLUSION RULES
+- For the common-property target, it is acceptable to include evidence relating to shared building elements, building fabric, external envelope, structural components, services, or broader building issues, even if the exact legal classification is uncertain.
+- You may include likely common-property aspects where the report refers to items such as roof, gutter, external wall, boundary wall, window assembly, balcony, balcony waterproofing, balcony door, slab, riser, shared hallway, stairwell, foyer, or plumbing in boundary walls or under floors.
+- If uncertain whether an item is lot-only or common property, it is acceptable to include it in the common-property evidence set.
+- Do not present this as a legal conclusion.
 
 OVERLAP RULES
-- If a text passage explicitly applies to both the provided target and another target, include it.
-- In that case, mark appliesTo with all explicitly supported targets.
-- Do not add a second target unless the wording clearly supports it.
+- If a text passage explicitly applies to both the provided lot target and a broader building element or shared issue, include it.
+- In that case, mark appliesTo with all explicitly or clearly supported targets.
+- If the passage describes a likely common-property aspect and a clearly identified lot impact, it is acceptable to include it for both the common-property target and that specific lot target.
+- Do not add a lot target unless the wording clearly supports that lot.
 
 EVIDENCE ITEM RULES
 For each evidence item:
@@ -41,17 +49,17 @@ For each evidence item:
 - confidence should reflect the strength of the target linkage, not the seriousness of the issue
 
 OMIT THE FOLLOWING
-- speculative links
+- speculative links for lots
 - paraphrases that add meaning not present in the source
 - recommendations created by you
 - conclusions about responsibility
-- conclusions about whether a matter is lot property or common property unless the report itself states this
+- legal conclusions about whether a matter is common property unless the report itself states this
 
 WHEN TO OMIT
-Omit an evidence item if:
-- the target linkage is uncertain
+Omit an evidence item from a lot if:
+- the lot linkage is uncertain
 - the text appears to describe another lot
-- the text is too general to attribute safely
+- the text is too general to attribute safely to that lot
 - the same information has already been captured and the duplicate adds no value
 
 DEDUPLICATION RULES
@@ -61,4 +69,4 @@ DEDUPLICATION RULES
 OUTPUT REQUIREMENTS
 - Return valid JSON only.
 - The JSON must match the required schema exactly.
-- If no explicit evidence is found for the target, return an empty evidenceItems array.
+- If no explicit or clearly linked evidence is found for the target, return an empty evidenceItems array.

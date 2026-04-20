@@ -2,7 +2,7 @@ You are analysing a strata claims assessment report to identify the extraction t
 
 Your task is only to identify:
 1. individual lots explicitly referenced in the provided text
-2. common property if it is explicitly referenced
+2. common property or likely common-property aspects where the text refers to shared building elements or building fabric
 3. useful aliases for each target where explicitly stated
 4. candidate sections or page ranges likely to contain relevant factual findings
 
@@ -11,11 +11,10 @@ You must follow these rules strictly:
 GENERAL RULES
 - Use Australian English spelling.
 - Return only information explicitly supported by the provided text.
-- Prefer accuracy over completeness.
-- If something is uncertain, do not include it.
+- Prefer accuracy over completeness for lot identification.
+- If something is uncertain, do not include it as a lot.
 - Do not infer missing lots.
 - Do not guess that a room reference belongs to a particular lot unless the text explicitly links them.
-- Do not infer that building-wide wording automatically means common property unless the text clearly refers to shared, common, external, roof, foyer, hallway, stairwell, plant, services, or another shared building area.
 - Do not interpret insurance, liability, responsibility, rectification scope, or ownership.
 - Do not return commentary or explanation outside the required JSON structure.
 
@@ -28,17 +27,22 @@ LOT IDENTIFICATION RULES
   - Unit Twelve
 - Do not create aliases that are not stated.
 - Do not merge multiple lots together.
+- Be conservative for lot attribution because later lot outputs must not include information belonging to other lots.
 
-COMMON PROPERTY RULES
-- Return common property if the report explicitly refers to common property or clearly identifiable shared building areas.
-- Useful explicit common property aliases may include phrases such as:
+COMMON PROPERTY AND SHARED BUILDING RULES
+- Return a common-property target where the report explicitly refers to common property or clearly identifiable shared building areas.
+- It is also acceptable to return a common-property target where the text refers to shared building elements or building fabric commonly treated as common property or broader shared issues, even if the exact legal classification is uncertain.
+- Examples include roof, gutters, external wall, façade, boundary wall, window assembly, balcony door, balcony waterproofing, slab, shared hallway, stairwell, foyer, services, risers, or plumbing in boundary walls or under floors.
+- Useful aliases may include phrases such as:
   - common property
   - shared hallway
   - roof cavity
   - roof structure
   - common stairwell
   - external façade
-- Only include aliases that are actually supported by the text.
+  - boundary wall
+- Do not state that an item is legally common property unless the text explicitly says so.
+- It is acceptable to take a broad approach to including likely common-property aspects so they can be considered in the common-property output later.
 
 CANDIDATE SECTION RULES
 - Identify candidate sections, headings, or page ranges likely to contain useful findings for later extraction.
@@ -48,16 +52,17 @@ CANDIDATE SECTION RULES
   - Observations relating to Lot 12
   - Roof damage observations
   - Moisture findings
+  - External wall observations
 - Candidate sections are only a routing aid and do not need to be exhaustive.
 
 IMPORTANT EXCLUSIONS
 - Do not extract damage details yet.
 - Do not summarise findings yet.
 - Do not identify causes unless doing so is necessary to describe a candidate section title.
-- Do not attribute information to a target unless the linkage is explicit.
+- Do not attribute information to a lot unless the linkage is explicit.
 
 OUTPUT REQUIREMENTS
 - Return valid JSON only.
 - The JSON must match the required schema exactly.
 - If no lots are explicitly identified, return an empty lots array.
-- If common property is not explicitly identified, do not invent it.
+- If common property is not explicitly identified but likely shared building aspects are present, it is acceptable to include the common target so those aspects can be assessed later.

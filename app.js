@@ -147,8 +147,6 @@ function renderResults() {
     const extraction = state.extractionByTarget[target.targetId];
     const summary = state.summariesByTarget[target.targetId];
     if (!extraction && !summary) return '';
-    const softened = summary?.softenedStatements || [];
-    const removed = summary?.removedStatements || [];
     return `
       <div class="card">
         <h3>${escapeHtml(target.displayName)} <span class="badge">${escapeHtml(target.targetType)}</span></h3>
@@ -158,26 +156,6 @@ function renderResults() {
             <p>${escapeHtml(summary.approvedSummary || 'No approved summary returned.')}</p>
             <div class="small">Verification status: ${escapeHtml(summary.verificationStatus)}</div>
           </div>
-          ${(softened.length || removed.length) ? `
-            <details>
-              <summary>Verification details</summary>
-              ${softened.length ? `
-                <h4>Softened statements</h4>
-                <div class="verification-grid header"><div>Original</div><div>Revised</div><div>Reason</div></div>
-                ${softened.map((item) => `
-                  <div class="verification-grid">
-                    <div>${escapeHtml(item.original)}</div>
-                    <div>${escapeHtml(item.revised)}</div>
-                    <div>${escapeHtml(item.reason)}</div>
-                  </div>
-                `).join('')}
-              ` : ''}
-              ${removed.length ? `
-                <h4>Removed statements</h4>
-                <ul>${removed.map((x) => `<li>${escapeHtml(x)}</li>`).join('')}</ul>
-              ` : ''}
-            </details>
-          ` : ''}
         ` : ''}
         ${extraction ? `
           <div class="inline-grid">

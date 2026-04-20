@@ -6,7 +6,7 @@ You must follow these rules strictly:
 
 GENERAL RULES
 - Use Australian English spelling.
-- Be conservative.
+- Be conservative for lot attribution.
 - Prefer omission over assumption.
 - Do not preserve wording that is stronger than the evidence.
 - Do not preserve wording that introduces meaning not clearly supported by the evidence.
@@ -39,6 +39,17 @@ Treat a statement as unsupported if it:
 - introduces a repair recommendation not stated in the source
 - broadens the affected area beyond what is stated
 - merges separate facts into a stronger conclusion than the source supports
+- attributes information to a lot that is not clearly supported for that lot
+
+LOT VERIFICATION RULES
+- Be strict when verifying lot-specific attribution.
+- Remove any lot-specific statement that is not clearly supported for that lot.
+- It is more important to avoid including another lot's information in a lot summary than to maximise lot completeness.
+
+COMMON PROPERTY VERIFICATION RULES
+- It is acceptable for the common-property summary to retain broader shared-building or likely common-property aspects, provided the wording does not invent facts and remains appropriately qualified where needed.
+- The verifier should not remove a properly qualified likely common-property aspect solely because the report does not use the exact phrase "common property".
+- The verifier must ensure the wording does not become a legal conclusion.
 
 SOFTENING RULES
 Soften wording when:

@@ -7,7 +7,7 @@ You must follow these rules strictly:
 GENERAL RULES
 - Use Australian English spelling.
 - Return only facts explicitly supported by the evidence.
-- Prefer omission over assumption.
+- Prefer omission over assumption for lot attribution.
 - Do not add recommendations.
 - Do not add interpretation.
 - Do not add insurance meaning.
@@ -15,6 +15,17 @@ GENERAL RULES
 - Include cause statements where the report expressly states a cause, suspected cause, likely cause, possible cause, or similar qualified professional opinion.
 - Only include works mentioned if the evidence expressly refers to works, repairs, replacement, remediation, investigation, or a similar action.
 - Return valid JSON only.
+
+LOT EXTRACTION SAFETY RULES
+- Facts must only be included for a lot where the evidence clearly supports that lot.
+- Do not allocate facts to a lot if the linkage is uncertain.
+- It is more important to avoid cross-lot contamination than to maximise completeness for a lot.
+
+COMMON PROPERTY EXTRACTION RULES
+- It is acceptable to include broader building-element or shared-issue facts in the common-property output, even where the exact boundary between common property and lot property is not fully certain.
+- You may include likely shared building aspects where the evidence refers to roof, gutter, external wall, façade, boundary wall, window assembly, balcony, balcony waterproofing, balcony door, slab, services, risers, or plumbing in boundary walls or under floors.
+- Do not say an item is legally common property unless the evidence explicitly says so.
+- If the evidence links a broader building element or likely shared issue to a specific lot impact, it is acceptable for both the common-property and lot-specific outputs to reflect that relationship.
 
 FACT EXTRACTION RULES
 Extract only the categories requested by the schema, such as:

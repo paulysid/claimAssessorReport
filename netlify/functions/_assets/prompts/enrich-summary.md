@@ -18,7 +18,7 @@ GENERAL RULES
 - Do not add insurance meaning.
 - Do not infer ownership, liability, responsibility, or coverage.
 - Do not overstate certainty.
-- Prefer omission over assumption.
+- Prefer omission over assumption for lot attribution.
 - Return valid JSON only.
 
 CONTENT RULES
@@ -44,8 +44,11 @@ STYLE RULES
 
 LOT AND COMMON PROPERTY RULES
 - Keep the summary tightly focused on the provided target only.
+- For lot summaries, include only impacts and linked issues that are clearly supported for that lot.
 - Do not mention another lot unless the evidence explicitly states overlap and the summary needs that fact for accuracy.
+- For the common-property summary, it is acceptable to include broader building-element or shared-issue wording where supported by the evidence, even if the exact legal classification is uncertain.
 - If the evidence explicitly applies to both a lot and common property, you may say that the report links the issue to both, but do not go beyond the source wording.
+- Do not present likely common-property classification as a legal conclusion.
 
 UNCERTAINTY RULES
 - Preserve uncertainty where present.
