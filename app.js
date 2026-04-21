@@ -490,6 +490,154 @@ function buildTargetContext(targetId) {
   }));
 }
 
+function detectCommonFindingType(item) {
+  const text = `${item.summary || ''} ${item.rawSnippet || ''}`.toLowerCase();
+  if (/roof|gutter|flashing|rainwater/.test(text)) return 'roof';
+  if (/slab|concrete|spalling|structural|beam|column|expansion joint/.test(text)) return 'slab-structural';
+  if (/electrical|wiring|sub-boards?|distribution boards?|temporary power|lighting|emergency lighting|circuits?|commissioning|power supply/.test(text)) return 'electrical-building-services';
+  if (/façade|facade|external wall|cladding|window|door|balcony/.test(text)) return 'facade-external-envelope';
+  if (/hallway|stairwell|foyer|common area|shared area|services|warehouse|factory|building/.test(text)) return 'shared-building-wide';
+  return 'other-building-wide';
+}
+
+function estimateEvidenceChars(item) {
+  return JSON.stringify(item).length;
+}
+
+function chunkEvidenceItems(items, maxChars) {
+  const chunks = [];
+  let current = [];
+  let currentChars = 0;
+  for (const item of items) {
+    const itemChars = estimateEvidenceChars(item);
+    if (current.length && currentChars + itemChars > maxChars) {
+      chunks.push(current);
+      current = [item];
+      currentChars = itemChars;
+      continue;
+    }
+    current.push(item);
+    currentChars += itemChars;
+  }
+  if (current.length) chunks.push(current);
+  return chunks;
+}
+
+function buildExtractionBatches(target, assembledEvidence) {
+  const maxChars = 6500;
+  if (target?.targetType !== 'common') {
+    return chunkEvidenceItems(assembledEvidence, maxChars).map((items, idx) => ({
+      batchId: `${target.targetId}-batch-${idx + 1}`,
+      findingType: 'lot',
+      items
+    }));
+  }
+  const grouped = new Map();
+  for (const item of assembledEvidence) {
+    const type = detectCommonFindingType(item);
+    if (!grouped.has(type)) grouped.set(type, []);
+    grouped.get(type).push(item);
+  }
+  const batches = [];
+  for (const [type, items] of grouped.entries()) {
+    const chunks = chunkEvidenceItems(items, maxChars);
+    chunks.forEach((chunk, idx) => {
+      batches.push({
+        batchId: `${target.targetId}-${type}-${idx + 1}`,
+        findingType: type,
+        items: chunk
+      });
+    });
+  }
+  return batches;
+}
+
+function mergeUniqueStrings(values) {
+  const seen = new Set();
+  const out = [];
+  for (const value of values || []) {
+    const clean = String(value || '').trim();
+    const key = clean.toLowerCase();
+    if (!clean || seen.has(key)) continue;
+    seen.add(key);
+    out.push(clean);
+  }
+  return out;
+}
+
+function mergeExtractionResults(target, extractionResults) {
+  const merged = {
+    targetId: target.targetId,
+    targetType: target.targetType,
+    areasAffected: [],
+    damageObserved: [],
+    causeStatements: [],
+    worksMentioned: [],
+    furtherInvestigationMentioned: [],
+    uncertaintiesMentioned: [],
+    sourceReferences: []
+  };
+
+  const cpGroups = new Map();
+
+  for (const result of extractionResults) {
+    merged.areasAffected.push(...(result.areasAffected || []));
+    merged.damageObserved.push(...(result.damageObserved || []));
+    merged.causeStatements.push(...(result.causeStatements || []));
+    merged.worksMentioned.push(...(result.worksMentioned || []));
+    merged.furtherInvestigationMentioned.push(...(result.furtherInvestigationMentioned || []));
+    merged.uncertaintiesMentioned.push(...(result.uncertaintiesMentioned || []));
+    merged.sourceReferences.push(...(result.sourceReferences || []));
+    const groups = Array.isArray(result.commonPropertyFindingsByType) ? result.commonPropertyFindingsByType : [];
+    for (const group of groups) {
+      const type = group.type || 'other-building-wide';
+      if (!cpGroups.has(type)) {
+        cpGroups.set(type, { type, label: group.label || formatFindingTypeLabel(type), items: [] });
+      }
+      cpGroups.get(type).items.push(...(group.items || []));
+    }
+  }
+
+  merged.areasAffected = mergeUniqueStrings(merged.areasAffected);
+  merged.damageObserved = mergeUniqueStrings(merged.damageObserved);
+  merged.causeStatements = mergeUniqueStrings(merged.causeStatements);
+  merged.worksMentioned = mergeUniqueStrings(merged.worksMentioned);
+  merged.furtherInvestigationMentioned = mergeUniqueStrings(merged.furtherInvestigationMentioned);
+  merged.uncertaintiesMentioned = mergeUniqueStrings(merged.uncertaintiesMentioned);
+
+  const srcSeen = new Set();
+  merged.sourceReferences = (merged.sourceReferences || []).filter((ref) => {
+    const key = JSON.stringify(ref);
+    if (srcSeen.has(key)) return false;
+    srcSeen.add(key);
+    return true;
+  });
+
+  if (target?.targetType === 'common') {
+    if (!cpGroups.size) {
+      const inferredGroups = new Map();
+      const addInferred = (type, items) => {
+        const cleaned = mergeUniqueStrings(items);
+        if (!cleaned.length) return;
+        inferredGroups.set(type, { type, label: formatFindingTypeLabel(type), items: cleaned });
+      };
+      addInferred('damage-observed', merged.damageObserved);
+      addInferred('cause-statements', merged.causeStatements);
+      addInferred('works-mentioned', merged.worksMentioned);
+      addInferred('further-investigation', merged.furtherInvestigationMentioned);
+      addInferred('uncertainties', merged.uncertaintiesMentioned);
+      merged.commonPropertyFindingsByType = [...inferredGroups.values()];
+    } else {
+      merged.commonPropertyFindingsByType = [...cpGroups.values()].map((group) => ({
+        ...group,
+        items: mergeUniqueStrings(group.items)
+      })).filter((group) => group.items.length);
+    }
+  }
+
+  return merged;
+}
+
 async function runTargetPipeline(target) {
   if (!state.evidenceByTarget[target.targetId]?.length) {
     await refreshEvidenceForTarget(target.targetId);
@@ -497,13 +645,25 @@ async function runTargetPipeline(target) {
   const assembledEvidence = buildTargetContext(target.targetId);
 
   setProgress(`Extract facts: ${target.displayName}`, 'running');
-  const extraction = await postJson('/.netlify/functions/extract-facts', {
-    target,
-    assembledEvidence,
-    config: getConfig()
-  });
+  const extractionBatches = buildExtractionBatches(target, assembledEvidence);
+  const extractionResults = [];
+  for (let i = 0; i < extractionBatches.length; i += 1) {
+    const batch = extractionBatches[i];
+    setProgress(`Extract facts: ${target.displayName}`, 'running', `${i + 1}/${extractionBatches.length}${batch.findingType ? ` — ${batch.findingType}` : ''}`);
+    const batchExtraction = await postJson('/.netlify/functions/extract-facts', {
+      target,
+      assembledEvidence: batch.items,
+      extractionBatch: { batchId: batch.batchId, findingType: batch.findingType, batchIndex: i + 1, batchCount: extractionBatches.length },
+      config: getConfig()
+    });
+    extractionResults.push(batchExtraction);
+    if (i < extractionBatches.length - 1) {
+      await sleep(350);
+    }
+  }
+  const extraction = mergeExtractionResults(target, extractionResults);
   state.extractionByTarget[target.targetId] = extraction;
-  setProgress(`Extract facts: ${target.displayName}`, 'completed');
+  setProgress(`Extract facts: ${target.displayName}`, 'completed', `${extractionBatches.length} batch${extractionBatches.length === 1 ? '' : 'es'}`);
 
   let summaryDraft = { targetId: target.targetId, draftSummary: '' };
   try {
