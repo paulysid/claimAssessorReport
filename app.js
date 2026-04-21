@@ -201,6 +201,80 @@ function renderResults() {
   els.resultsContainer.innerHTML = entries || '<div class="small">No results yet.</div>';
 }
 
+
+function extractionHasFindings(extraction) {
+  if (!extraction) return false;
+  const arrays = [
+    extraction.areasAffected,
+    extraction.damageObserved,
+    extraction.causeStatements,
+    extraction.worksMentioned,
+    extraction.furtherInvestigationMentioned,
+    extraction.uncertaintiesMentioned
+  ];
+  if (arrays.some((arr) => Array.isArray(arr) && arr.length)) return true;
+  const groups = Array.isArray(extraction.commonPropertyFindingsByType) ? extraction.commonPropertyFindingsByType : [];
+  return groups.some((g) => Array.isArray(g.items) && g.items.length);
+}
+
+function buildFallbackDraftSummary(target, extraction) {
+  if (!extractionHasFindings(extraction)) return '';
+  const parts = [];
+
+  if (target?.targetType === 'common') {
+    const groups = Array.isArray(extraction.commonPropertyFindingsByType) ? extraction.commonPropertyFindingsByType.filter((g) => Array.isArray(g.items) && g.items.length) : [];
+    const groupSentences = groups.map((group) => {
+      const items = group.items.slice(0, 3);
+      if (!items.length) return '';
+      return `${group.label || formatFindingTypeLabel(group.type)} findings include ${items.join('; ')}`;
+    }).filter(Boolean);
+    if (groupSentences.length) {
+      parts.push(`The report identifies common property or building-wide findings. ${groupSentences.join('. ')}.`);
+    }
+  }
+
+  const damage = (extraction.damageObserved || []).slice(0, 4);
+  if (damage.length) parts.push(`The report notes ${damage.join('; ')}.`);
+  const works = (extraction.worksMentioned || []).slice(0, 4);
+  if (works.length) parts.push(`It also refers to works including ${works.join('; ')}.`);
+  const causes = (extraction.causeStatements || []).slice(0, 2);
+  if (causes.length) parts.push(`The report states ${causes.join('; ')}.`);
+  const further = (extraction.furtherInvestigationMentioned || []).slice(0, 2);
+  if (further.length) parts.push(`Further work or confirmation mentioned includes ${further.join('; ')}.`);
+  const uncertainties = (extraction.uncertaintiesMentioned || []).slice(0, 2);
+  if (uncertainties.length) parts.push(`The report also notes that ${uncertainties.join('; ')}.`);
+
+  return parts.join(' ').trim();
+}
+
+function normaliseVerifiedResult(target, extraction, summaryDraft, verified) {
+  const fallbackSummary = buildFallbackDraftSummary(target, extraction);
+  const draftText = String(summaryDraft?.draftSummary || '').trim();
+  const approved = String(verified?.approvedSummary || '').trim();
+
+  if (verified && verified.verificationStatus) {
+    return {
+      targetId: verified.targetId || target.targetId,
+      verificationStatus: verified.verificationStatus,
+      approvedSummary: approved || draftText || fallbackSummary || 'No approved summary returned.',
+      removedStatements: Array.isArray(verified.removedStatements) ? verified.removedStatements : [],
+      softenedStatements: Array.isArray(verified.softenedStatements) ? verified.softenedStatements : [],
+      verificationNote: verified.verificationNote || ''
+    };
+  }
+
+  return {
+    targetId: target.targetId,
+    verificationStatus: 'failed',
+    approvedSummary: draftText || fallbackSummary || 'No approved summary returned.',
+    removedStatements: [],
+    softenedStatements: [],
+    verificationNote: extractionHasFindings(extraction)
+      ? 'Verification result was unavailable, so a fallback summary was retained for display and audit.'
+      : 'No supported findings were available to verify.'
+  };
+}
+
 function escapeHtml(text) {
   return String(text)
     .replaceAll('&', '&amp;')
@@ -420,25 +494,43 @@ async function runTargetPipeline(target) {
   state.extractionByTarget[target.targetId] = extraction;
   setProgress(`Extract facts: ${target.displayName}`, 'completed');
 
-  setProgress(`Summarise: ${target.displayName}`, 'running');
-  const summaryDraft = await postJson('/.netlify/functions/enrich-summary', {
-    target,
-    extraction,
-    assembledEvidence,
-    config: getConfig()
-  });
-  setProgress(`Summarise: ${target.displayName}`, 'completed');
+  let summaryDraft = { targetId: target.targetId, draftSummary: '' };
+  try {
+    setProgress(`Summarise: ${target.displayName}`, 'running');
+    summaryDraft = await postJson('/.netlify/functions/enrich-summary', {
+      target,
+      extraction,
+      assembledEvidence,
+      config: getConfig()
+    });
+    if (!String(summaryDraft?.draftSummary || '').trim() && extractionHasFindings(extraction)) {
+      summaryDraft = { targetId: target.targetId, draftSummary: buildFallbackDraftSummary(target, extraction) };
+    }
+    setProgress(`Summarise: ${target.displayName}`, 'completed');
+  } catch (error) {
+    summaryDraft = { targetId: target.targetId, draftSummary: buildFallbackDraftSummary(target, extraction) };
+    setProgress(`Summarise: ${target.displayName}`, 'failed', error.message);
+  }
 
-  setProgress(`Verify: ${target.displayName}`, 'running');
-  const verified = await postJson('/.netlify/functions/verify-summary', {
-    target,
-    extraction,
-    summary: summaryDraft,
-    assembledEvidence,
-    config: getConfig()
-  });
+  let verified;
+  try {
+    setProgress(`Verify: ${target.displayName}`, 'running');
+    verified = await postJson('/.netlify/functions/verify-summary', {
+      target,
+      extraction,
+      summary: summaryDraft,
+      assembledEvidence,
+      config: getConfig()
+    });
+    verified = normaliseVerifiedResult(target, extraction, summaryDraft, verified);
+    setProgress(`Verify: ${target.displayName}`, 'completed', verified.verificationStatus);
+  } catch (error) {
+    verified = normaliseVerifiedResult(target, extraction, summaryDraft, null);
+    verified.verificationNote = error.message || verified.verificationNote;
+    setProgress(`Verify: ${target.displayName}`, 'failed', error.message);
+  }
+
   state.summariesByTarget[target.targetId] = verified;
-  setProgress(`Verify: ${target.displayName}`, 'completed', verified.verificationStatus);
 }
 
 async function runFullPipeline() {
