@@ -174,7 +174,7 @@ function renderResults() {
         ${summary ? `
           <div class="callout ${summary.verificationStatus === 'failed' ? 'error' : 'success'}">
             <strong>Customer summary</strong>
-            <p>${escapeHtml(summary.approvedSummary || 'No approved summary returned.')}</p>
+            <p>${escapeHtml(normaliseSummaryText(summary.approvedSummary || 'No approved summary returned.')).replace(/\n/g, '<br>')}</p>
           </div>
         ` : ''}
         ${extraction ? `
@@ -250,13 +250,13 @@ function buildFallbackDraftSummary(target, extraction) {
 function normaliseVerifiedResult(target, extraction, summaryDraft, verified) {
   const fallbackSummary = buildFallbackDraftSummary(target, extraction);
   const draftText = String(summaryDraft?.draftSummary || '').trim();
-  const approved = String(verified?.approvedSummary || '').trim();
+  const approved = normaliseSummaryText(verified?.approvedSummary || '');
 
   if (verified && verified.verificationStatus) {
     return {
       targetId: verified.targetId || target.targetId,
       verificationStatus: verified.verificationStatus,
-      approvedSummary: approved || draftText || fallbackSummary || 'No approved summary returned.',
+      approvedSummary: normaliseSummaryText(approved || draftText || fallbackSummary || 'No approved summary returned.'),
       removedStatements: Array.isArray(verified.removedStatements) ? verified.removedStatements : [],
       softenedStatements: Array.isArray(verified.softenedStatements) ? verified.softenedStatements : [],
       verificationNote: verified.verificationNote || ''
@@ -266,13 +266,24 @@ function normaliseVerifiedResult(target, extraction, summaryDraft, verified) {
   return {
     targetId: target.targetId,
     verificationStatus: 'failed',
-    approvedSummary: draftText || fallbackSummary || 'No approved summary returned.',
+    approvedSummary: normaliseSummaryText(draftText || fallbackSummary || 'No approved summary returned.'),
     removedStatements: [],
     softenedStatements: [],
     verificationNote: extractionHasFindings(extraction)
       ? 'Verification result was unavailable, so a fallback summary was retained for display and audit.'
       : 'No supported findings were available to verify.'
   };
+}
+
+
+function normaliseSummaryText(text) {
+  return String(text || '')
+    .replace(/\\r\\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function escapeHtml(text) {
@@ -592,7 +603,7 @@ function summaryExportMarkdown() {
   return state.targets.map((target) => {
     const summary = state.summariesByTarget[target.targetId];
     if (!summary) return '## ' + target.displayName + '\\n\\nNo verified summary available.\\n';
-    return '## ' + target.displayName + '\\n\\n' + (summary.approvedSummary || 'No approved summary returned.') + '\\n';
+    return '## ' + target.displayName + '\\n\\n' + normaliseSummaryText(summary.approvedSummary || 'No approved summary returned.') + '\\n';
   }).join('\\n');
 }
 
