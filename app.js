@@ -280,28 +280,10 @@ function normaliseSummaryText(text) {
   return String(text || '')
     .replace(/\\r\\n/g, '\n')
     .replace(/\\n/g, '\n')
-    .replace(/\/n/g, '\n')
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
-}
-
-function normaliseSummaryForJson(text) {
-  return normaliseSummaryText(text).replace(/\n+/g, ' ').replace(/\s{2,}/g, ' ').trim();
-}
-
-function normaliseAuditExport(data) {
-  return JSON.parse(JSON.stringify(data, (key, value) => {
-    if (typeof value !== 'string') return value;
-    if (['approvedSummary', 'draftSummary', 'verificationNote'].includes(key)) {
-      return normaliseSummaryForJson(value);
-    }
-    return value
-      .replace(/\\r\\n/g, '\n')
-      .replace(/\\n/g, '\n')
-      .replace(/\/n/g, '\n');
-  }));
 }
 
 function escapeHtml(text) {
@@ -420,14 +402,48 @@ function buildEvidenceCandidateContext(target, config) {
       startPage,
       endPage,
       score: hits,
-      text: text.slice(0, 9000)
+      text: text.slice(0, 4200)
     });
   }
   windows.sort((a, b) => (b.score - a.score) || (a.startPage - b.startPage));
-  const shortlisted = windows.filter((w) => w.score > 0).slice(0, 6);
-  if (!shortlisted.length && windows.length) shortlisted.push(...windows.slice(0, Math.min(3, windows.length)));
+  const shortlisted = windows.filter((w) => w.score > 0).slice(0, 4);
+  if (!shortlisted.length && windows.length) shortlisted.push(...windows.slice(0, Math.min(2, windows.length)));
   shortlisted.sort((a, b) => a.startPage - b.startPage);
   return shortlisted;
+}
+
+function chunkCandidateContext(windows) {
+  const maxChars = 12000;
+  const maxWindowsPerBatch = 2;
+  const batches = [];
+  let current = [];
+  let currentChars = 0;
+  for (const window of windows || []) {
+    const size = JSON.stringify(window).length;
+    const shouldSplit = current.length && (current.length >= maxWindowsPerBatch || currentChars + size > maxChars);
+    if (shouldSplit) {
+      batches.push(current);
+      current = [];
+      currentChars = 0;
+    }
+    current.push(window);
+    currentChars += size;
+  }
+  if (current.length) batches.push(current);
+  return batches;
+}
+
+function mergeEvidenceItems(items) {
+  const merged = [];
+  const seen = new Set();
+  for (const item of items || []) {
+    const key = [item.pageStart, item.pageEnd, (item.summary || '').trim().toLowerCase(), (item.rawSnippet || '').trim().toLowerCase()].join('|');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push({ ...item, included: item.included !== false });
+  }
+  merged.sort((a, b) => (a.pageStart - b.pageStart) || (a.pageEnd - b.pageEnd));
+  return merged;
 }
 
 function sleep(ms) {
@@ -486,13 +502,23 @@ async function refreshEvidenceForTarget(targetId) {
   const config = getConfig();
   setProgress(`Locate evidence: ${target.displayName}`, 'running');
   const candidateContext = buildEvidenceCandidateContext(target, config);
-  const data = await postJson('/.netlify/functions/locate-evidence', {
-    target,
-    document: { documentId: state.document.documentId, fileName: state.document.fileName },
-    candidateContext,
-    config
-  });
-  state.evidenceByTarget[targetId] = (data.evidenceItems || []).map((item) => ({ ...item, included: item.included !== false }));
+  const contextBatches = chunkCandidateContext(candidateContext);
+  const evidenceItems = [];
+  for (let i = 0; i < contextBatches.length; i += 1) {
+    setProgress(`Locate evidence: ${target.displayName}`, 'running', `${i + 1}/${contextBatches.length}`);
+    const data = await postJson('/.netlify/functions/locate-evidence', {
+      target,
+      document: { documentId: state.document.documentId, fileName: state.document.fileName },
+      candidateContext: contextBatches[i],
+      locateBatch: { batchIndex: i + 1, batchCount: contextBatches.length },
+      config
+    });
+    evidenceItems.push(...(data.evidenceItems || []));
+    if (i < contextBatches.length - 1) {
+      await sleep(250);
+    }
+  }
+  state.evidenceByTarget[targetId] = mergeEvidenceItems(evidenceItems);
   renderEvidence();
   setProgress(`Locate evidence: ${target.displayName}`, 'completed', `${state.evidenceByTarget[targetId].length} items`);
 }
@@ -764,7 +790,7 @@ function downloadFile(name, content, type = 'application/json') {
 }
 
 function auditExport() {
-  return normaliseAuditExport({
+  return {
     exportedAt: new Date().toISOString(),
     fileName: state.file?.name || null,
     document: state.document,
@@ -774,7 +800,7 @@ function auditExport() {
     evidenceByTarget: state.evidenceByTarget,
     extractionByTarget: state.extractionByTarget,
     summariesByTarget: state.summariesByTarget
-  });
+  };
 }
 
 function summaryExportMarkdown() {

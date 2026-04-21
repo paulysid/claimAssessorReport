@@ -81,3 +81,12 @@ COMMON PROPERTY TARGET STRUCTURE
 - Return only one common-property target for the document.
 - Do not create separate targets for different common-property finding types such as roof, slab, electrical, façade, or services.
 - Different common-property aspects should be grouped later within the single common-property target.
+
+
+FORMAT RULES
+- Return only the raw JSON object.
+- Do not wrap the response in markdown fences.
+- Do not use ```json.
+- Keep summaries short.
+- Keep rawSnippet concise and only as long as needed for audit and verification.
+- Limit the response to the most relevant evidence items only.

@@ -62,13 +62,38 @@ function debugLog(message, meta = undefined) {
   }
 }
 
-function parseJsonFromText(text) {
-  try {
-    return JSON.parse(text);
-  } catch {
-    const fenced = text.match(/```json\s*([\s\S]*?)```/i)?.[1] || text;
-    return JSON.parse(fenced);
+function stripMarkdownFences(text) {
+  let value = String(text || '').trim();
+  value = value.replace(/^```(?:json)?\s*/i, '');
+  value = value.replace(/\s*```\s*$/i, '');
+  return value.trim();
+}
+
+function extractFirstJsonObject(text) {
+  const value = String(text || '');
+  const start = value.indexOf('{');
+  const end = value.lastIndexOf('}');
+  if (start >= 0 && end > start) {
+    return value.slice(start, end + 1);
   }
+  return value;
+}
+
+function parseJsonFromText(text) {
+  const attempts = [
+    String(text || ''),
+    stripMarkdownFences(text),
+    extractFirstJsonObject(stripMarkdownFences(text))
+  ];
+  let last;
+  for (const candidate of attempts) {
+    try {
+      return JSON.parse(candidate);
+    } catch (error) {
+      last = error;
+    }
+  }
+  throw last;
 }
 
 function sleep(ms) {
