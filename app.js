@@ -280,10 +280,28 @@ function normaliseSummaryText(text) {
   return String(text || '')
     .replace(/\\r\\n/g, '\n')
     .replace(/\\n/g, '\n')
+    .replace(/\/n/g, '\n')
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+}
+
+function normaliseSummaryForJson(text) {
+  return normaliseSummaryText(text).replace(/\n+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+}
+
+function normaliseAuditExport(data) {
+  return JSON.parse(JSON.stringify(data, (key, value) => {
+    if (typeof value !== 'string') return value;
+    if (['approvedSummary', 'draftSummary', 'verificationNote'].includes(key)) {
+      return normaliseSummaryForJson(value);
+    }
+    return value
+      .replace(/\\r\\n/g, '\n')
+      .replace(/\\n/g, '\n')
+      .replace(/\/n/g, '\n');
+  }));
 }
 
 function escapeHtml(text) {
@@ -746,7 +764,7 @@ function downloadFile(name, content, type = 'application/json') {
 }
 
 function auditExport() {
-  return {
+  return normaliseAuditExport({
     exportedAt: new Date().toISOString(),
     fileName: state.file?.name || null,
     document: state.document,
@@ -756,7 +774,7 @@ function auditExport() {
     evidenceByTarget: state.evidenceByTarget,
     extractionByTarget: state.extractionByTarget,
     summariesByTarget: state.summariesByTarget
-  };
+  });
 }
 
 function summaryExportMarkdown() {
